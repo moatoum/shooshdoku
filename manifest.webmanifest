@@ -1,0 +1,15 @@
+{
+  "name": "Shooshdoku",
+  "short_name": "Shooshdoku",
+  "description": "A cozy cat logic puzzle, made with love for Shoosh.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF0DC",
+  "theme_color": "#FBF0DC",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

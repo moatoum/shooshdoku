@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Shooshdoku</title>
+<meta name="description" content="A cozy cat logic puzzle, made with love for Shoosh.">
+<meta name="theme-color" content="#FBF0DC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Shooshdoku">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./style.css?v=6">
+</head>
+<body>
+
+<!-- ==================== SVG LIBRARY ==================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Tuxedo cat face (happy) -->
+    <g id="cat-base">
+      <path d="M20 42 L14 12 Q13 8 17 10 L40 24 Z" fill="#2E2B33"/>
+      <path d="M80 42 L86 12 Q87 8 83 10 L60 24 Z" fill="#2E2B33"/>
+      <path d="M22 38 L18.5 18 L34 27 Z" fill="#F5A0B0"/>
+      <path d="M78 38 L81.5 18 L66 27 Z" fill="#F5A0B0"/>
+      <ellipse cx="50" cy="58" rx="37" ry="33" fill="#2E2B33"/>
+      <path d="M50 34 Q70 34 78 52 Q83 66 74 78 Q64 89 50 89 Q36 89 26 78 Q17 66 22 52 Q30 34 50 34 Z" fill="#2E2B33"/>
+      <ellipse cx="50" cy="70" rx="24" ry="17.5" fill="#FFFDF7"/>
+      <ellipse cx="35" cy="53" rx="11" ry="11.5" fill="#FFFDF7"/>
+      <ellipse cx="65" cy="53" rx="11" ry="11.5" fill="#FFFDF7"/>
+    </g>
+    <symbol id="cat-happy" viewBox="0 0 100 100">
+      <use href="#cat-base"/>
+      <circle cx="35" cy="54" r="6" fill="#26232B"/>
+      <circle cx="65" cy="54" r="6" fill="#26232B"/>
+      <circle cx="37" cy="51.5" r="2" fill="#fff"/>
+      <circle cx="67" cy="51.5" r="2" fill="#fff"/>
+      <path d="M46 66 Q50 70 54 66 L50 62 Z" fill="#F2889B" stroke="#E5758A" stroke-width="1" stroke-linejoin="round"/>
+      <path d="M44 76 Q47 79 50 76 Q53 79 56 76" fill="none" stroke="#4A3F45" stroke-width="2.2" stroke-linecap="round"/>
+      <g stroke="#D9CDB8" stroke-width="1.8" stroke-linecap="round">
+        <path d="M20 66 L8 63"/><path d="M21 71 L9 72"/>
+        <path d="M80 66 L92 63"/><path d="M79 71 L91 72"/>
+      </g>
+    </symbol>
+    <symbol id="cat-sad" viewBox="0 0 100 100">
+      <use href="#cat-base"/>
+      <path d="M28 47 Q34 44 40 47" fill="none" stroke="#26232B" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M72 47 Q66 44 60 47" fill="none" stroke="#26232B" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="35" cy="55" r="5.5" fill="#26232B"/>
+      <circle cx="65" cy="55" r="5.5" fill="#26232B"/>
+      <circle cx="36.5" cy="53.5" r="1.7" fill="#fff"/>
+      <circle cx="66.5" cy="53.5" r="1.7" fill="#fff"/>
+      <path d="M46 67 Q50 71 54 67 L50 63 Z" fill="#F2889B"/>
+      <path d="M44 79 Q50 74 56 79" fill="none" stroke="#4A3F45" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M28 62 Q25 68 28 71 Q31 68 28 62 Z" fill="#8FD0F2"/>
+      <path d="M72 62 Q69 68 72 71 Q75 68 72 62 Z" fill="#8FD0F2"/>
+    </symbol>
+    <symbol id="cat-wink" viewBox="0 0 100 100">
+      <use href="#cat-base"/>
+      <circle cx="35" cy="54" r="6" fill="#26232B"/>
+      <circle cx="37" cy="51.5" r="2" fill="#fff"/>
+      <path d="M58 54 Q65 58 72 54" fill="none" stroke="#26232B" stroke-width="3" stroke-linecap="round"/>
+      <path d="M46 66 Q50 70 54 66 L50 62 Z" fill="#F2889B"/>
+      <path d="M46 76 Q50 79 54 76 L54 78 Q50 84 46 78 Z" fill="#F2889B"/>
+    </symbol>
+    <!-- Paw -->
+    <symbol id="paw" viewBox="0 0 100 100">
+      <ellipse cx="30" cy="30" rx="11" ry="14" transform="rotate(-18 30 30)"/>
+      <ellipse cx="70" cy="30" rx="11" ry="14" transform="rotate(18 70 30)"/>
+      <ellipse cx="12" cy="52" rx="9" ry="12" transform="rotate(-34 12 52)"/>
+      <ellipse cx="88" cy="52" rx="9" ry="12" transform="rotate(34 88 52)"/>
+      <path d="M50 42 Q68 42 74 58 Q80 74 68 82 Q58 89 50 89 Q42 89 32 82 Q20 74 26 58 Q32 42 50 42 Z"/>
+    </symbol>
+    <!-- Goldfish cracker -->
+    <symbol id="fish" viewBox="0 0 100 100">
+      <path d="M14 50 Q14 32 30 26 Q52 18 68 32 L84 20 Q88 17 88 24 L86 50 L88 76 Q88 83 84 80 L68 68 Q52 82 30 74 Q14 68 14 50 Z" fill="#F6A93B" stroke="#E08E1B" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="34" cy="45" r="4.5" fill="#7A4A12"/>
+      <path d="M30 60 Q38 66 48 62" fill="none" stroke="#C77E19" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <!-- X mark -->
+    <symbol id="xmark" viewBox="0 0 100 100">
+      <path d="M28 28 L72 72 M72 28 L28 72" stroke-width="14" stroke-linecap="round" fill="none"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ==================== HOME ==================== -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <button class="avatar-btn f0" id="btn-profile" aria-label="Profile"><span id="home-avatar">😽</span></button>
+    <button class="chip streak-chip" id="btn-streak"><svg class="paw-ico"><use href="#paw"/></svg><b id="home-streak">0</b></button>
+    <button class="round-btn" id="btn-settings" aria-label="Settings">⚙︎</button>
+  </div>
+
+  <button class="daily-card" id="btn-daily">
+    <div class="daily-title">Daily<br>Challenge</div>
+    <div class="daily-icon" id="daily-icon">📅</div>
+    <div class="daily-sub" id="daily-sub">Play today’s puzzle</div>
+  </button>
+
+  <div class="logo">
+    <div class="logo-line1">SH<span class="logo-o-ears">O<svg viewBox="0 0 60 30" class="ears-svg"><path d="M8 30 L2 4 Q1 0 5 2 L24 14 Z" fill="#8D9BE0"/><path d="M52 30 L58 4 Q59 0 55 2 L36 14 Z" fill="#8D9BE0"/></svg></span><span class="logo-o2">O</span>SH</div>
+    <div class="logo-line2">D<span class="logo-o-tail">O<svg viewBox="0 0 70 60" class="tail-svg"><path d="M8 6 Q3 32 24 43 Q44 52 60 41 Q65 37 62 32" fill="none" stroke="#F49F1C" stroke-width="13" stroke-linecap="round"/></svg></span>KU</div>
+    <div class="logo-tag" id="logo-tag">for the cleverest cat 🐾</div>
+  </div>
+
+  <div class="home-bottom">
+    <button class="big-btn" id="btn-play">Level 1</button>
+  </div>
+</div>
+
+<!-- ==================== GAME ==================== -->
+<div class="screen" id="screen-game">
+  <div class="topbar game-topbar">
+    <button class="round-btn" id="btn-back" aria-label="Back">←</button>
+    <div class="hud-stat"><span class="hud-label" id="hud-mode">Level</span><span class="hud-value" id="hud-level">1</span></div>
+    <div class="hud-stat"><span class="hud-label">Score</span><span class="hud-value" id="hud-score">0</span></div>
+    <button class="round-btn" id="btn-settings2" aria-label="Settings">⚙︎</button>
+  </div>
+
+  <div class="chips-row">
+    <div class="chip"><svg class="chip-cat"><use href="#cat-happy"/></svg><b id="cat-count">0/4</b></div>
+    <div class="chip fishes" id="fish-chip">
+      <svg class="fish-ico"><use href="#fish"/></svg>
+      <svg class="fish-ico"><use href="#fish"/></svg>
+      <svg class="fish-ico"><use href="#fish"/></svg>
+    </div>
+  </div>
+
+  <div class="rules-banner" id="rules-banner">
+    <div class="rule">
+      <svg viewBox="0 0 64 48" class="rule-svg">
+        <rect x="2" y="2" width="60" height="44" rx="6" fill="#F3E3C6"/>
+        <rect x="6" y="6" width="34" height="36" rx="4" fill="#F9D869" opacity=".85"/>
+        <g fill="none" stroke="#B85C4A" stroke-width="3" stroke-linecap="round">
+          <path d="M12 12 L20 20 M20 12 L12 20"/><path d="M26 12 L34 20 M34 12 L26 20"/>
+          <path d="M12 28 L20 36 M20 28 L12 36"/>
+        </g>
+        <circle cx="30" cy="32" r="8" fill="#2E2B33"/><ellipse cx="30" cy="34.5" rx="5" ry="4" fill="#fff"/>
+      </svg>
+      <span>1 cat per color</span>
+    </div>
+    <div class="rule">
+      <svg viewBox="0 0 64 48" class="rule-svg">
+        <rect x="2" y="2" width="60" height="44" rx="6" fill="#F3E3C6"/>
+        <g fill="none" stroke="#B85C4A" stroke-width="3" stroke-linecap="round">
+          <path d="M12 12 L20 20 M20 12 L12 20"/><path d="M44 12 L52 20 M52 12 L44 20"/>
+          <path d="M28 28 L36 36 M36 28 L28 36"/>
+        </g>
+        <circle cx="32" cy="16" r="8" fill="#2E2B33"/><ellipse cx="32" cy="18.5" rx="5" ry="4" fill="#fff"/>
+      </svg>
+      <span>1 cat per row &amp; column</span>
+    </div>
+    <div class="rule">
+      <svg viewBox="0 0 64 48" class="rule-svg">
+        <rect x="2" y="2" width="60" height="44" rx="6" fill="#F3E3C6"/>
+        <g fill="none" stroke="#B85C4A" stroke-width="3" stroke-linecap="round">
+          <path d="M12 12 L20 20 M20 12 L12 20"/><path d="M28 12 L36 20 M36 12 L28 20"/><path d="M44 12 L52 20 M52 12 L44 20"/>
+          <path d="M12 28 L20 36 M20 28 L12 36"/><path d="M44 28 L52 36 M52 28 L44 36"/>
+        </g>
+        <circle cx="32" cy="32" r="8" fill="#2E2B33"/><ellipse cx="32" cy="34.5" rx="5" ry="4" fill="#fff"/>
+      </svg>
+      <span>Cats cannot touch</span>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board-card"><div class="board" id="board"></div></div>
+  </div>
+
+  <div class="powerups">
+    <button class="power-btn" id="btn-reveal" aria-label="Reveal a cat">
+      <svg class="power-ico"><use href="#cat-wink"/></svg><span class="badge" id="reveal-count">3</span>
+    </button>
+    <button class="power-btn" id="btn-autox" aria-label="Auto paw-marks">
+      <span class="power-emoji">💡</span><span class="badge" id="autox-count">3</span>
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <canvas id="confetti"></canvas>
+
+  <!-- Win sheet -->
+  <div class="overlay" id="win-overlay">
+    <div class="sheet">
+      <svg class="sheet-cat bounce"><use href="#cat-happy"/></svg>
+      <h2 class="sheet-title" id="win-title">Purrfect!</h2>
+      <div class="sheet-score">Score <b id="win-score">0</b></div>
+      <div class="sheet-note" id="win-note"></div>
+      <button class="big-btn" id="btn-next">Next Level</button>
+      <button class="ghost-btn" id="btn-win-home">Home</button>
+    </div>
+  </div>
+
+  <!-- Out of fishes sheet -->
+  <div class="overlay" id="lose-overlay">
+    <div class="sheet">
+      <svg class="sheet-cat wiggle"><use href="#cat-sad"/></svg>
+      <h2 class="sheet-title">Out of Fishes</h2>
+      <div class="sheet-note">Cats remaining: <b id="lose-remaining">1</b></div>
+      <button class="big-btn blue" id="btn-refill">Get 3 Fishes&nbsp;&nbsp;💛 free</button>
+      <button class="ghost-btn" id="btn-restart">Restart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STREAK ==================== -->
+<div class="screen" id="screen-streak">
+  <div class="topbar">
+    <button class="round-btn" id="btn-streak-back" aria-label="Back">←</button>
+    <div class="screen-title">Daily Streak</div>
+    <div class="round-spacer"></div>
+  </div>
+  <div class="streak-body">
+    <div class="paw-hero"><svg class="paw-hero-svg"><use href="#paw"/></svg></div>
+    <div class="streak-num" id="streak-current">0</div>
+    <div class="streak-label">Current Streak</div>
+    <div class="best-pill">Best Streak: <b id="streak-best">0</b></div>
+    <div class="week-row" id="week-row"></div>
+    <div class="streak-hint">Finish the Daily Challenge to grow your streak.<br>7 days in a row unlocks the <b>Golden Frame</b> ✨</div>
+  </div>
+</div>
+
+<!-- ==================== PROFILE MODAL ==================== -->
+<div class="overlay" id="profile-overlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Profile</h2><button class="close-btn" id="profile-close">✕</button></div>
+    <div class="profile-top">
+      <div class="avatar-preview f0" id="avatar-preview">😽</div>
+      <div class="name-wrap">
+        <input id="name-input" maxlength="14" autocomplete="off" spellcheck="false">
+        <span class="pencil">✏️</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-avatar">Avatar</button>
+      <button class="tab" id="tab-frame">Frame</button>
+    </div>
+    <div class="tile-grid" id="avatar-grid"></div>
+    <div class="tile-grid hidden" id="frame-grid"></div>
+    <button class="big-btn" id="profile-confirm">Confirm</button>
+  </div>
+</div>
+
+<!-- ==================== SETTINGS MODAL ==================== -->
+<div class="overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Settings</h2><button class="close-btn" id="settings-close">✕</button></div>
+    <label class="setting-row">Sound effects<input type="checkbox" id="opt-sound" class="switch"></label>
+    <label class="setting-row">Auto paw-marks after placing a cat<input type="checkbox" id="opt-autox" class="switch"></label>
+    <button class="ghost-btn" id="btn-restart-level">Restart level</button>
+    <button class="ghost-btn danger" id="btn-reset">Reset all progress</button>
+    <div class="about">Shooshdoku · no ads, ever<br>made with 💛 for Shoosh</div>
+  </div>
+</div>
+
+<script src="./levels.js?v=5"></script>
+<script src="./app.js?v=5"></script>
+</body>
+</html>
