@@ -5,6 +5,7 @@
 const DEFAULTS = {
   name: 'Shoosh', avatar: 8, frame: 0, sound: true, autoX: false,
   level: 1, totalScore: 0, game: null, streakDays: {}, streakBest: 0, coached: false,
+  gamesPlayed: 0,
 };
 let S = load();
 function load() {
@@ -257,6 +258,8 @@ function startLevel(def, daily) {
     G.board = sg.board.slice(); G.fishes = sg.fishes; G.score = sg.score;
     G.reveals = sg.reveals; G.autox = sg.autox;
   }
+  if (!resumed) { S.gamesPlayed++; save(); }
+  $('rules-banner').classList.toggle('collapsed', S.gamesPlayed > 2);
   scoreShown = 0;
   $('hud-mode').textContent = daily ? 'Daily' : 'Level';
   $('hud-level').textContent = daily ? new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : String(levelNumber());
@@ -331,6 +334,12 @@ function animScore() {
   }
   step();
 }
+
+$('btn-rules').addEventListener('click', () => {
+  sfx.ui();
+  $('rules-banner').classList.toggle('collapsed');
+  requestAnimationFrame(fitBoard);
+});
 
 /* ---------- board interaction ---------- */
 const boardEl = $('board');

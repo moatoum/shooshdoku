@@ -222,6 +222,11 @@ body {
 .fish-ico.lost { filter: grayscale(1); opacity: .35; }
 .fishes.shake { animation: shake .45s; }
 
+.rules-chip {
+  cursor: pointer; font-size: 16px; padding: 7px 13px;
+  color: var(--gold); transition: transform .1s;
+}
+.rules-chip:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--wood-edge); }
 .rules-banner {
   display: flex; gap: 8px; justify-content: space-between;
   background: var(--parch); border-radius: 8px; padding: 8px 10px;
@@ -229,6 +234,7 @@ body {
   box-shadow: 0 4px 0 var(--wood-edge);
   margin-bottom: 12px;
 }
+.rules-banner.collapsed { display: none; }
 .rule { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .rule-svg { width: 42px; height: 32px; flex: none; }
 .rule span { font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--ink); }
@@ -265,7 +271,7 @@ body {
 .cell.hinted svg { animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
 
 /* region palette · dusk-warm */
-.c0 { background: #F5C56A; } .c1 { background: #7FB8D9; }
+.c0 { background: #EDD9A8; } .c1 { background: #7FB8D9; }
 .c2 { background: #EE8FA8; } .c3 { background: #9BC97E; }
 .c4 { background: #A98FD9; } .c5 { background: #EF9A62; }
 .c6 { background: #7FCFBC; } .c7 { background: #DB6A5E; }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Shooshdoku</title>
-<meta name="description" content="A cozy cat logic puzzle, made with love for Shoosh.">
+<meta name="description" content="A cozy cat logic puzzle, made with love.">
 <meta name="theme-color" content="#4A3A85">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -13,14 +13,14 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./style.css?v=11">
+<link rel="stylesheet" href="./style.css?v=12">
 </head>
 <body>
 
 <!-- ==================== SPLASH ==================== -->
 <div id="splash">
   <img src="./art/splash-poster.jpg" alt="Shooshdoku">
-  <div class="splash-sub">made with 💛 for Shoosh</div>
+  <div class="splash-sub">made with love</div>
 </div>
 
 <!-- ==================== HOME POSTER BG + PETALS ==================== -->
@@ -130,13 +130,14 @@
       <svg class="fish-ico"><use href="#fish"/></svg>
       <svg class="fish-ico"><use href="#fish"/></svg>
     </div>
+    <button class="chip rules-chip" id="btn-rules" aria-label="Rules">?</button>
   </div>
 
   <div class="rules-banner" id="rules-banner">
     <div class="rule">
       <svg viewBox="0 0 64 48" class="rule-svg">
         <rect x="2" y="2" width="60" height="44" rx="6" fill="#F3E3C6"/>
-        <rect x="6" y="6" width="34" height="36" rx="4" fill="#F9D869" opacity=".85"/>
+        <rect x="6" y="6" width="34" height="36" rx="4" fill="#EDD9A8" opacity=".9"/>
         <g fill="none" stroke="#B85C4A" stroke-width="3" stroke-linecap="round">
           <path d="M12 12 L20 20 M20 12 L12 20"/><path d="M26 12 L34 20 M34 12 L26 20"/>
           <path d="M12 28 L20 36 M20 28 L12 36"/>
@@ -255,11 +256,11 @@
     <label class="setting-row">Auto paw-marks after placing a cat<input type="checkbox" id="opt-autox" class="switch"></label>
     <button class="ghost-btn" id="btn-restart-level">Restart level</button>
     <button class="ghost-btn danger" id="btn-reset">Reset all progress</button>
-    <div class="about">Shooshdoku · no ads, ever<br>made with 💛 for Shoosh</div>
+    <div class="about">Shooshdoku · no ads, ever<br>made with love</div>
   </div>
 </div>
 
-<script src="./levels.js?v=11"></script>
-<script src="./app.js?v=11"></script>
+<script src="./levels.js?v=12"></script>
+<script src="./app.js?v=12"></script>
 </body>
 </html>
