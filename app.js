@@ -94,34 +94,52 @@ const FRAMES = 6; // f0..f5, f5 = golden (7-day streak)
 const WIN_TITLES = n => [`Purrfect, ${n}!`, 'Meow-nificent!', `Paw-some, ${n}!`, 'Feline great!', 'Claw-ver girl!', `Whisker win, ${n}!`];
 const WIN_NOTES = ['Not a single hairball 🐾', 'The cats are so proud of you', 'Somebody give her a fish 🐟', 'Smartest human in the house', 'Nap well earned 😴'];
 
-/* ---------- audio ---------- */
-let AC = null;
+/* ---------- audio: soft, filtered, marimba-like ---------- */
+let AC = null, MASTER = null;
 function ac() {
-  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    MASTER = AC.createGain();
+    MASTER.gain.value = 0.75;
+    const lp = AC.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3400; lp.Q.value = 0.4;
+    MASTER.connect(lp); lp.connect(AC.destination);
+  }
   if (AC.state === 'suspended') AC.resume();
   return AC;
 }
-function tone(freq, dur, type, vol, when = 0, slide = 0) {
+function note(freq, opts = {}) {
   if (!S.sound) return;
+  const { dur = 0.18, vol = 0.08, when = 0, type = 'sine', slide = 0 } = opts;
   try {
-    const c = ac(), o = c.createOscillator(), g = c.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, c.currentTime + when);
-    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), c.currentTime + when + dur);
-    g.gain.setValueAtTime(0, c.currentTime + when);
-    g.gain.linearRampToValueAtTime(vol, c.currentTime + when + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + when + dur);
-    o.connect(g); g.connect(c.destination);
-    o.start(c.currentTime + when); o.stop(c.currentTime + when + dur + 0.05);
+    const c = ac(), t = c.currentTime + when;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0006, t + dur);
+    o.connect(g); g.connect(MASTER);
+    o.start(t); o.stop(t + dur + 0.05);
   } catch (e) {}
 }
+// short wooden tick: fundamental + faint bright partial, both dying fast
+function tick(base, vol, when = 0) {
+  note(base, { dur: 0.07, vol, when });
+  note(base * 2.76, { dur: 0.04, vol: vol * 0.35, when });
+}
 const sfx = {
-  ui: () => tone(520, .06, 'triangle', .12),
-  mark: () => tone(950, .05, 'triangle', .10),
-  unmark: () => tone(420, .06, 'triangle', .09, 0, -120),
-  place: () => { tone(660, .09, 'triangle', .16); tone(990, .12, 'triangle', .14, .07); },
-  error: () => { tone(190, .18, 'square', .09); tone(140, .22, 'square', .08, .1); },
-  refill: () => { tone(520, .08, 'triangle', .13); tone(660, .08, 'triangle', .13, .08); tone(880, .12, 'triangle', .13, .16); },
-  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .15, i * .11)),
+  ui: () => tick(620, 0.045),
+  mark: () => tick(840, 0.05),
+  unmark: () => tick(430, 0.045),
+  place: () => { note(523.25, { dur: 0.15, vol: 0.075 }); note(783.99, { dur: 0.24, vol: 0.065, when: 0.075 }); tick(1568, 0.022, 0.075); },
+  error: () => { note(320, { dur: 0.2, vol: 0.05, slide: -40 }); note(238, { dur: 0.3, vol: 0.045, when: 0.13, slide: -30 }); },
+  refill: () => [523.25, 659.25, 783.99].forEach((f, i) => note(f, { dur: 0.18, vol: 0.06, when: i * 0.09 })),
+  win: () => {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => note(f, { dur: 0.32, vol: 0.07, when: i * 0.12 }));
+    note(1568, { dur: 0.55, vol: 0.04, when: 0.5 });
+  },
 };
 
 /* ---------- tiny utils ---------- */
@@ -437,15 +455,25 @@ boardEl.addEventListener('pointermove', e => {
 document.addEventListener('contextmenu', e => e.preventDefault());
 
 function cellEl(i) { return boardEl.children[i]; }
-function bumpCell(cell) { cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop'); }
+function bumpCell(cell, cls = 'pop') {
+  cell.classList.remove('pop', 'pop-big');
+  void cell.offsetWidth;
+  cell.classList.add(cls);
+}
 
 function mark(i, cell) { G.board[i] = X; setCellArt(cell, X); bumpCell(cell); sfx.mark(); persistGame(); }
-function removeCat(i, cell) { G.board[i] = EMPTY; setCellArt(cell, EMPTY); sfx.unmark(); refreshRegionsDone(); updateHud(); persistGame(); }
+function removeCat(i, cell) {
+  G.board[i] = EMPTY;
+  const art = cell.querySelector('svg');
+  if (art) { art.classList.add('fade-out'); setTimeout(() => { if (G.board[i] === EMPTY) setCellArt(cell, EMPTY); }, 150); }
+  else setCellArt(cell, EMPTY);
+  sfx.unmark(); refreshRegionsDone(); updateHud(); persistGame();
+}
 
 function placedCats() { const out = []; G.board.forEach((v, i) => v === CAT && out.push(i)); return out; }
 function tryPlaceCat(i, cell) {
   if (solveWith(G.def.n, G.def.reg, placedCats().concat(i))) {
-    G.board[i] = CAT; setCellArt(cell, CAT); bumpCell(cell); sfx.place();
+    G.board[i] = CAT; setCellArt(cell, CAT); bumpCell(cell, 'pop-big'); sfx.place();
     const secs = (Date.now() - G.lastPlace) / 1000; G.lastPlace = Date.now();
     G.score += 250 + Math.max(0, Math.round(150 - secs * 15));
     if (S.autoX) autoMarkAround(i);
@@ -458,11 +486,15 @@ function tryPlaceCat(i, cell) {
 }
 function mistake(i, cell) {
   sfx.error();
+  // brief crying-cat flash on the wrong square, then it settles into an X
+  cell.innerHTML = '<svg><use href="#cat-sad"/></svg>';
+  bumpCell(cell, 'pop-big');
   cell.classList.remove('bad'); void cell.offsetWidth; cell.classList.add('bad');
   conflictsOf(i).forEach(j => { const c = cellEl(j); c.classList.remove('bad'); void c.offsetWidth; c.classList.add('bad'); });
   $('fish-chip').classList.remove('shake'); void $('fish-chip').offsetWidth; $('fish-chip').classList.add('shake');
   G.fishes--; G.score = Math.max(0, G.score - 100);
-  G.board[i] = X; setCellArt(cell, X);
+  G.board[i] = X;
+  setTimeout(() => { if (G.board[i] === X) { setCellArt(cell, X); bumpCell(cell); } }, 780);
   updateHud();
   persistGame();
   if (G.fishes <= 0) {
@@ -506,7 +538,7 @@ $('btn-reveal').addEventListener('click', () => {
   G.reveals--; sfx.place();
   G.board[target] = CAT;
   const cell = cellEl(target);
-  setCellArt(cell, CAT); cell.classList.add('hinted'); bumpCell(cell);
+  setCellArt(cell, CAT); bumpCell(cell, 'pop-big');
   G.score += 100;
   if (S.autoX) autoMarkAround(target);
   refreshRegionsDone(); updateHud();
