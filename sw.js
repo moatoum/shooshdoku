@@ -1,4 +1,4 @@
-const CACHE = 'shooshdoku-v2';
+const CACHE = 'shooshdoku-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -9,8 +9,12 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
-  './icons/shoosh-splash.png',
   './icons/shoosh-avatar.png',
+  './art/home-poster.jpg',
+  './art/splash-poster.jpg',
+  './fonts/pixelify.woff2',
+  './fonts/silkscreen.woff2',
+  './fonts/silkscreen-bold.woff2',
 ];
 
 self.addEventListener('install', e => {

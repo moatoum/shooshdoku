@@ -211,6 +211,7 @@ function markDailyDone() {
 /* ---------- screens ---------- */
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  $('home-bg').classList.toggle('on', id === 'screen-home');
 }
 function overlay(id, on) { $(id).classList.toggle('show', on); }
 let toastTimer = null;
@@ -227,14 +228,11 @@ function renderHome() {
   ab.style.background = AVATAR_BG[S.avatar];
   $('home-streak').textContent = streakCurrent();
   $('home-score').textContent = S.totalScore.toLocaleString();
-  $('btn-play').textContent = 'Level ' + S.level;
-  $('logo-tag').textContent = 'for the cleverest ' + S.name + ' 🐾';
+  $('btn-play').innerHTML = 'Level <span class="num">' + S.level + '</span>';
   const done = !!S.streakDays[todayKey()];
-  const card = $('btn-daily');
-  card.classList.toggle('done', done);
-  $('daily-icon').textContent = done ? '✅' : '📅';
-  $('daily-sub').textContent = done ? 'Done! See you tomorrow 🐾'
-    : new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  $('btn-daily').classList.toggle('done', done);
+  $('daily-sub').textContent = done ? '✓ done, see you tomorrow'
+    : new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 /* ---------- game state ---------- */
@@ -491,7 +489,7 @@ function confetti() {
   const cv = $('confetti'), ctx = cv.getContext('2d');
   cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
   ctx.scale(devicePixelRatio, devicePixelRatio);
-  const colors = ['#F49B0B', '#D96FA6', '#5FB6CE', '#9ED383', '#B39DE6', '#F9D869'];
+  const colors = ['#EE8FA8', '#F5C56A', '#D96C8C', '#A98FD9', '#F5A0B0', '#FBEED6'];
   const parts = Array.from({ length: 130 }, () => ({
     x: Math.random() * innerWidth, y: -20 - Math.random() * innerHeight * 0.5,
     w: 6 + Math.random() * 7, h: 8 + Math.random() * 8,
@@ -641,9 +639,86 @@ $('btn-reset').addEventListener('click', () => {
 ['profile-overlay', 'settings-overlay'].forEach(id =>
   $(id).addEventListener('click', e => { if (e.target === $(id)) overlay(id, false); }));
 
+/* ---------- petals, hearts & sparkles ---------- */
+(function petals() {
+  const cv = $('petals'), ctx = cv.getContext('2d');
+  let W = 0, H = 0;
+  function size() {
+    W = innerWidth; H = innerHeight;
+    cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  size(); addEventListener('resize', size);
+  const PINKS = ['#F2A0B5', '#E87D9C', '#F5BCCB', '#D96C8C'];
+  const petalsArr = Array.from({ length: 22 }, () => spawnPetal(true));
+  const sparks = Array.from({ length: 10 }, spawnSpark);
+  const hearts = [];
+  function spawnPetal(anywhere) {
+    return {
+      x: Math.random() * W, y: anywhere ? Math.random() * H : -12,
+      s: 4 + Math.random() * 5,
+      vy: 0.35 + Math.random() * 0.65, vx: 0,
+      sway: Math.random() * Math.PI * 2, swaySpd: 0.008 + Math.random() * 0.014,
+      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.02,
+      col: PINKS[(Math.random() * PINKS.length) | 0],
+    };
+  }
+  function spawnSpark() {
+    return { x: Math.random() * W, y: Math.random() * H * 0.6, t: Math.random() * Math.PI * 2, spd: 0.02 + Math.random() * 0.02, s: 2 + Math.random() * 2 };
+  }
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    const homeActive = document.getElementById('screen-home').classList.contains('active');
+    // petals fall everywhere, denser feel on home
+    for (const p of petalsArr) {
+      p.sway += p.swaySpd; p.rot += p.vr;
+      p.x += Math.sin(p.sway) * 0.5; p.y += p.vy;
+      if (p.y > H + 14) Object.assign(p, spawnPetal(false));
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha = homeActive ? 0.9 : 0.45;
+      ctx.fillStyle = p.col;
+      ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.75);
+      ctx.restore();
+    }
+    if (homeActive) {
+      // twinkling pixel sparkles
+      for (const sp of sparks) {
+        sp.t += sp.spd;
+        const a = (Math.sin(sp.t) + 1) / 2;
+        if (a < 0.05 && Math.random() < 0.02) { sp.x = Math.random() * W; sp.y = Math.random() * H * 0.6; }
+        ctx.globalAlpha = a * 0.85;
+        ctx.fillStyle = '#FBEED6';
+        ctx.fillRect(sp.x - sp.s / 2, sp.y - sp.s * 1.5, sp.s, sp.s * 3);
+        ctx.fillRect(sp.x - sp.s * 1.5, sp.y - sp.s / 2, sp.s * 3, sp.s);
+      }
+      // occasional floating heart
+      if (Math.random() < 0.008 && hearts.length < 4) {
+        hearts.push({ x: W * (0.15 + Math.random() * 0.7), y: H * 0.85, vy: -0.5 - Math.random() * 0.3, s: 5 + Math.random() * 4, a: 1 });
+      }
+    }
+    for (let i = hearts.length - 1; i >= 0; i--) {
+      const h = hearts[i];
+      h.y += h.vy; h.a -= 0.004;
+      if (h.a <= 0) { hearts.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.min(h.a, 0.9);
+      ctx.fillStyle = '#E87D9C';
+      const s = h.s; // pixel heart: two squares + body
+      ctx.fillRect(h.x - s, h.y - s, s * 0.9, s * 0.9);
+      ctx.fillRect(h.x + s * 0.1, h.y - s, s * 0.9, s * 0.9);
+      ctx.fillRect(h.x - s * 1.4, h.y - s * 0.3, s * 2.8, s);
+      ctx.fillRect(h.x - s * 0.9, h.y + s * 0.7, s * 1.8, s * 0.7);
+      ctx.fillRect(h.x - s * 0.35, h.y + s * 1.4, s * 0.7, s * 0.5);
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
 /* ---------- boot ---------- */
 document.addEventListener('pointerdown', function unlock() { ac(); document.removeEventListener('pointerdown', unlock); }, { once: true });
 renderHome();
+$('home-bg').classList.add('on');
 setTimeout(() => {
   const sp = $('splash');
   sp.classList.add('hide');
