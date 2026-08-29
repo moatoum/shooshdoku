@@ -12,7 +12,77 @@ function load() {
   try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('shooshdoku') || '{}')); }
   catch (e) { return Object.assign({}, DEFAULTS); }
 }
-function save() { localStorage.setItem('shooshdoku', JSON.stringify(S)); }
+function save() {
+  S.updatedAt = Date.now();
+  localStorage.setItem('shooshdoku', JSON.stringify(S));
+  idbSet(S);
+  scheduleCloudPush();
+}
+
+/* ---------- durable storage: IndexedDB mirror + cloud backup ---------- */
+const SYNC_URL = 'https://br-patient-cake-aewbc669-save.compute.c-2.us-east-2.aws.neon.tech/';
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('shooshdoku', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function idbSet(val) {
+  try {
+    idbOpen().then(db => db.transaction('kv', 'readwrite').objectStore('kv').put(JSON.stringify(val), 'save')).catch(() => {});
+  } catch (e) {}
+}
+function idbGet() {
+  try {
+    return idbOpen().then(db => new Promise(res => {
+      const rq = db.transaction('kv').objectStore('kv').get('save');
+      rq.onsuccess = () => res(rq.result || null);
+      rq.onerror = () => res(null);
+    })).catch(() => null);
+  } catch (e) { return Promise.resolve(null); }
+}
+function ensureSyncId() {
+  if (S.syncId) return;
+  const a = new Uint8Array(20);
+  crypto.getRandomValues(a);
+  S.syncId = Array.from(a, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+  save();
+}
+let pushTimer = null, pushDirty = false;
+function scheduleCloudPush() {
+  pushDirty = true;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => cloudPush(false), 8000);
+}
+function cloudPush(keepalive) {
+  if (!S.syncId) return;
+  pushDirty = false;
+  fetch(SYNC_URL + '?id=' + S.syncId, {
+    method: 'PUT', keepalive: !!keepalive,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(S),
+  }).then(r => { if (r.ok) localStorage.setItem('shooshdoku.backupAt', String(Date.now())); })
+    .catch(() => { pushDirty = true; });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && pushDirty) { clearTimeout(pushTimer); cloudPush(true); }
+});
+async function restoreFromCode(code) {
+  code = (code || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (code.length < 12) { toast('That code looks too short'); return; }
+  try {
+    const r = await fetch(SYNC_URL + '?id=' + code);
+    if (r.status === 404) { toast('No backup found for that code'); return; }
+    if (!r.ok) throw new Error('http ' + r.status);
+    const body = await r.json();
+    if (!body.data || typeof body.data !== 'object') throw new Error('bad payload');
+    localStorage.setItem('shooshdoku', JSON.stringify(Object.assign({}, DEFAULTS, body.data)));
+    toast('Progress restored! 🐾');
+    setTimeout(() => location.reload(), 900);
+  } catch (e) { toast('Could not reach the cloud — try again'); }
+}
 
 const $ = id => document.getElementById(id);
 const AVATARS = ['🐱', '🐼', '🐶', '🐊', '🐔', '🦆', '🦁', '😽', 'SHOOSH'];
@@ -624,8 +694,25 @@ $('profile-confirm').addEventListener('click', () => {
 function openSettings() {
   $('opt-sound').checked = S.sound;
   $('opt-autox').checked = S.autoX;
+  ensureSyncId();
+  $('backup-code').textContent = S.syncId.replace(/(.{5})/g, '$1 ').trim();
+  const at = +localStorage.getItem('shooshdoku.backupAt') || 0;
+  $('backup-status').textContent = at
+    ? 'Last backup: ' + new Date(at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : 'Backing up automatically as you play';
   overlay('settings-overlay', true);
 }
+$('btn-copy-code').addEventListener('click', () => {
+  sfx.ui();
+  const done = () => toast('Backup code copied 🐾');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(S.syncId).then(done, () => toast(S.syncId));
+  else toast(S.syncId, 6000);
+});
+$('btn-restore-code').addEventListener('click', () => {
+  sfx.ui();
+  const code = window.prompt('Enter the backup code:');
+  if (code) restoreFromCode(code);
+});
 $('btn-settings').addEventListener('click', () => { sfx.ui(); openSettings(); });
 $('btn-settings2').addEventListener('click', () => { sfx.ui(); openSettings(); });
 $('settings-close').addEventListener('click', () => { sfx.ui(); overlay('settings-overlay', false); });
@@ -640,6 +727,8 @@ $('btn-restart-level').addEventListener('click', () => {
 $('btn-reset').addEventListener('click', () => {
   if (!confirm('Reset all progress? This cannot be undone.')) return;
   localStorage.removeItem('shooshdoku');
+  localStorage.removeItem('shooshdoku.backupAt');
+  try { indexedDB.deleteDatabase('shooshdoku'); } catch (e) {}
   S = load(); renderHome(); overlay('settings-overlay', false);
   toast('Fresh start 🐾');
 });
@@ -728,6 +817,19 @@ $('btn-reset').addEventListener('click', () => {
 document.addEventListener('pointerdown', function unlock() { ac(); document.removeEventListener('pointerdown', unlock); }, { once: true });
 renderHome();
 $('home-bg').classList.add('on');
+(async function initPersistence() {
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if (!localStorage.getItem('shooshdoku')) {
+    const mirror = await idbGet();
+    if (mirror) {
+      localStorage.setItem('shooshdoku', mirror);
+      S = load();
+      renderHome();
+      toast('Progress recovered 🐾');
+    }
+  }
+  ensureSyncId();
+})();
 setTimeout(() => {
   const sp = $('splash');
   sp.classList.add('hide');

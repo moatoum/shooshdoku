@@ -418,6 +418,19 @@ body {
 .switch:checked { background: var(--pink); }
 .switch:checked::after { transform: translateX(24px); }
 .modal .ghost-btn { margin-top: 12px; }
+.backup-box {
+  background: var(--parch-dark); border: 2px solid var(--wood-dark);
+  border-radius: 10px; padding: 14px; margin-top: 12px;
+}
+.backup-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.backup-code {
+  font-family: 'Silkscreen', monospace; font-size: 13px; font-weight: 700;
+  color: var(--ink); background: #FDF4DE; border: 2px solid var(--wood-dark);
+  border-radius: 6px; padding: 9px 10px; text-align: center;
+  user-select: all; -webkit-user-select: all; word-break: break-all;
+}
+.backup-status { font-size: 12px; font-weight: 600; color: var(--ink-soft); text-align: center; margin-top: 7px; }
+.backup-box .ghost-btn { margin-top: 10px; padding: 10px 16px; font-size: 15px; }
 .about { text-align: center; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-top: 20px; line-height: 1.7; }
 
 /* ============ Streak screen ============ */

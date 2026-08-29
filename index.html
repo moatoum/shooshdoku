@@ -13,7 +13,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./style.css?v=12">
+<link rel="stylesheet" href="./style.css?v=13">
 </head>
 <body>
 
@@ -254,13 +254,20 @@
     <div class="modal-head"><h2>Settings</h2><button class="close-btn" id="settings-close">✕</button></div>
     <label class="setting-row">Sound effects<input type="checkbox" id="opt-sound" class="switch"></label>
     <label class="setting-row">Auto paw-marks after placing a cat<input type="checkbox" id="opt-autox" class="switch"></label>
+    <div class="backup-box">
+      <div class="backup-title">☁️ Cloud backup</div>
+      <div class="backup-code" id="backup-code"></div>
+      <div class="backup-status" id="backup-status"></div>
+      <button class="ghost-btn" id="btn-copy-code">Copy backup code</button>
+      <button class="ghost-btn" id="btn-restore-code">Restore from a code</button>
+    </div>
     <button class="ghost-btn" id="btn-restart-level">Restart level</button>
     <button class="ghost-btn danger" id="btn-reset">Reset all progress</button>
     <div class="about">Shooshdoku · no ads, ever<br>made with love</div>
   </div>
 </div>
 
-<script src="./levels.js?v=12"></script>
-<script src="./app.js?v=12"></script>
+<script src="./levels.js?v=13"></script>
+<script src="./app.js?v=13"></script>
 </body>
 </html>

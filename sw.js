@@ -1,4 +1,4 @@
-const CACHE = 'shooshdoku-v4';
+const CACHE = 'shooshdoku-v5';
 const ASSETS = [
   './',
   './index.html',
