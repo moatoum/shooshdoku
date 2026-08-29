@@ -3,8 +3,8 @@
 
 /* ---------- persistence ---------- */
 const DEFAULTS = {
-  name: 'Shoosh', avatar: 7, frame: 0, sound: true, autoX: false,
-  level: 1, streakDays: {}, streakBest: 0, coached: false,
+  name: 'Shoosh', avatar: 8, frame: 0, sound: true, autoX: false,
+  level: 1, totalScore: 0, game: null, streakDays: {}, streakBest: 0, coached: false,
 };
 let S = load();
 function load() {
@@ -14,8 +14,11 @@ function load() {
 function save() { localStorage.setItem('shooshdoku', JSON.stringify(S)); }
 
 const $ = id => document.getElementById(id);
-const AVATARS = ['🐱', '🐼', '🐶', '🐊', '🐔', '🦆', '🦁', '😽'];
-const AVATAR_BG = ['#BDE3F0', '#DDEED8', '#FFE9A8', '#CBEBC4', '#CDE6F7', '#FFF3C9', '#F6C6C0', '#CBC4EE'];
+const AVATARS = ['🐱', '🐼', '🐶', '🐊', '🐔', '🦆', '🦁', '😽', 'SHOOSH'];
+const AVATAR_BG = ['#BDE3F0', '#DDEED8', '#FFE9A8', '#CBEBC4', '#CDE6F7', '#FFF3C9', '#F6C6C0', '#CBC4EE', '#CBB9F2'];
+function avatarHTML(i) {
+  return AVATARS[i] === 'SHOOSH' ? '<img class="avatar-img" src="./icons/shoosh-avatar.png" alt="Shoosh">' : AVATARS[i];
+}
 const FRAMES = 6; // f0..f5, f5 = golden (7-day streak)
 const WIN_TITLES = n => [`Purrfect, ${n}!`, 'Meow-nificent!', `Paw-some, ${n}!`, 'Feline great!', 'Claw-ver girl!', `Whisker win, ${n}!`];
 const WIN_NOTES = ['Not a single hairball 🐾', 'The cats are so proud of you', 'Somebody give her a fish 🐟', 'Smartest human in the house', 'Nap well earned 😴'];
@@ -218,11 +221,12 @@ function toast(msg, ms = 2200) {
 
 /* ---------- home ---------- */
 function renderHome() {
-  $('home-avatar').textContent = AVATARS[S.avatar];
+  $('home-avatar').innerHTML = avatarHTML(S.avatar);
   const ab = $('btn-profile');
   ab.className = 'avatar-btn f' + S.frame;
   ab.style.background = AVATAR_BG[S.avatar];
   $('home-streak').textContent = streakCurrent();
+  $('home-score').textContent = S.totalScore.toLocaleString();
   $('btn-play').textContent = 'Level ' + S.level;
   $('logo-tag').textContent = 'for the cleverest ' + S.name + ' 🐾';
   const done = !!S.streakDays[todayKey()];
@@ -247,6 +251,14 @@ function startLevel(def, daily) {
   G.locked = new Set(def.pre);
   def.pre.forEach(i => G.board[i] = CAT);
   G.fishes = 3; G.score = 0; G.reveals = 3; G.autox = 3; G.lastPlace = Date.now();
+  // resume a saved in-progress game if it matches this level
+  const sg = S.game;
+  const resumed = sg && sg.daily === daily && sg.n === def.n &&
+    (daily ? sg.dateKey === todayKey() : sg.num === G.levelNum);
+  if (resumed) {
+    G.board = sg.board.slice(); G.fishes = sg.fishes; G.score = sg.score;
+    G.reveals = sg.reveals; G.autox = sg.autox;
+  }
   scoreShown = 0;
   $('hud-mode').textContent = daily ? 'Daily' : 'Level';
   $('hud-level').textContent = daily ? new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : String(levelNumber());
@@ -255,7 +267,21 @@ function startLevel(def, daily) {
   overlay('win-overlay', false); overlay('lose-overlay', false);
   show('screen-game');
   requestAnimationFrame(fitBoard);
+  if (resumed && G.fishes <= 0) {
+    G.over = true;
+    $('lose-remaining').textContent = def.n - G.board.filter(v => v === CAT).length;
+    setTimeout(() => overlay('lose-overlay', true), 400);
+  } else if (resumed && G.board.some((v, i) => v !== EMPTY && !G.locked.has(i))) {
+    toast('Welcome back 🐾 right where you left off');
+  }
   if (!S.coached) { setTimeout(() => toast('Tap once for ✕ · tap again to place a cat 🐈', 3600), 600); S.coached = true; save(); }
+}
+function persistGame() {
+  S.game = G.over && G.fishes > 0 ? null : {
+    daily: G.daily, num: G.daily ? 0 : G.levelNum, dateKey: todayKey(), n: G.def.n,
+    board: G.board.slice(), fishes: G.fishes, score: G.score, reveals: G.reveals, autox: G.autox,
+  };
+  save();
 }
 function levelNumber() { return G.daily ? 0 : G.levelNum; }
 
@@ -267,7 +293,7 @@ function buildBoard() {
     const cell = document.createElement('div');
     cell.className = 'cell c' + G.def.reg[i];
     cell.dataset.i = i;
-    if (G.board[i] === CAT) setCellArt(cell, CAT);
+    if (G.board[i] !== EMPTY) setCellArt(cell, G.board[i]);
     b.appendChild(cell);
   }
   refreshRegionsDone();
@@ -336,8 +362,8 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 function cellEl(i) { return boardEl.children[i]; }
 function bumpCell(cell) { cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop'); }
 
-function mark(i, cell) { G.board[i] = X; setCellArt(cell, X); bumpCell(cell); sfx.mark(); }
-function removeCat(i, cell) { G.board[i] = EMPTY; setCellArt(cell, EMPTY); sfx.unmark(); refreshRegionsDone(); updateHud(); }
+function mark(i, cell) { G.board[i] = X; setCellArt(cell, X); bumpCell(cell); sfx.mark(); persistGame(); }
+function removeCat(i, cell) { G.board[i] = EMPTY; setCellArt(cell, EMPTY); sfx.unmark(); refreshRegionsDone(); updateHud(); persistGame(); }
 
 function placedCats() { const out = []; G.board.forEach((v, i) => v === CAT && out.push(i)); return out; }
 function tryPlaceCat(i, cell) {
@@ -348,7 +374,7 @@ function tryPlaceCat(i, cell) {
     if (S.autoX) autoMarkAround(i);
     refreshRegionsDone(); updateHud();
     const cats = G.board.filter(v => v === CAT).length;
-    if (cats === G.def.n) win();
+    if (cats === G.def.n) win(); else persistGame();
   } else {
     mistake(i, cell);
   }
@@ -361,6 +387,7 @@ function mistake(i, cell) {
   G.fishes--; G.score = Math.max(0, G.score - 100);
   G.board[i] = X; setCellArt(cell, X);
   updateHud();
+  persistGame();
   if (G.fishes <= 0) {
     G.over = true;
     const remaining = G.def.n - G.board.filter(v => v === CAT).length;
@@ -406,7 +433,7 @@ $('btn-reveal').addEventListener('click', () => {
   G.score += 100;
   if (S.autoX) autoMarkAround(target);
   refreshRegionsDone(); updateHud();
-  if (G.board.filter(v => v === CAT).length === G.def.n) win();
+  if (G.board.filter(v => v === CAT).length === G.def.n) win(); else persistGame();
 });
 $('btn-autox').addEventListener('click', () => {
   if (G.over || G.autox <= 0) return;
@@ -415,12 +442,16 @@ $('btn-autox').addEventListener('click', () => {
   G.autox--; sfx.mark();
   cats.forEach(autoMarkAround);
   updateHud();
+  persistGame();
 });
 
 /* ---------- win / lose ---------- */
 function win() {
   G.over = true;
   G.score += 200;
+  S.totalScore += G.score;
+  S.game = null;
+  save();
   updateHud();
   sfx.win();
   confetti();
@@ -446,10 +477,12 @@ $('btn-next').addEventListener('click', () => {
 $('btn-win-home').addEventListener('click', () => { sfx.ui(); overlay('win-overlay', false); renderHome(); show('screen-home'); });
 $('btn-refill').addEventListener('click', () => {
   sfx.refill(); G.fishes = 3; G.over = false; overlay('lose-overlay', false); updateHud();
+  persistGame();
   toast('3 fresh fishes — no ads here, ever 💛');
 });
 $('btn-restart').addEventListener('click', () => {
   sfx.ui(); overlay('lose-overlay', false);
+  S.game = null; save();
   if (G.daily) startLevel(dailyDef(todayKey()), true); else playLevel(G.levelNum);
 });
 
@@ -530,7 +563,7 @@ function openProfile() {
 }
 function refreshPreview() {
   const p = $('avatar-preview');
-  p.textContent = AVATARS[tmpAvatar];
+  p.innerHTML = avatarHTML(tmpAvatar);
   p.className = 'avatar-preview f' + tmpFrame;
   p.style.background = AVATAR_BG[tmpAvatar];
 }
@@ -540,7 +573,7 @@ function buildAvatarGrid() {
     const b = document.createElement('button');
     b.className = 'tile' + (i === tmpAvatar ? ' selected' : '');
     b.style.background = AVATAR_BG[i];
-    b.innerHTML = a + '<span class="check">✓</span>';
+    b.innerHTML = avatarHTML(i) + '<span class="check">✓</span>';
     b.addEventListener('click', () => { sfx.ui(); tmpAvatar = i; buildAvatarGrid(); refreshPreview(); });
     g.appendChild(b);
   });
@@ -553,7 +586,7 @@ function buildFrameGrid() {
     const locked = i === 5 && goldLocked;
     b.className = 'tile f' + i + (i === tmpFrame ? ' selected' : '') + (locked ? ' locked' : '');
     b.style.background = AVATAR_BG[tmpAvatar];
-    b.innerHTML = AVATARS[tmpAvatar] + '<span class="check">✓</span>' + (locked ? '<span class="lock">🔒</span>' : '');
+    b.innerHTML = avatarHTML(tmpAvatar) + '<span class="check">✓</span>' + (locked ? '<span class="lock">🔒</span>' : '');
     b.addEventListener('click', () => {
       if (locked) { toast('Golden frame: 7-day streak ✨'); return; }
       sfx.ui(); tmpFrame = i; buildFrameGrid(); refreshPreview();
@@ -594,6 +627,7 @@ $('opt-autox').addEventListener('change', e => { S.autoX = e.target.checked; sav
 $('btn-restart-level').addEventListener('click', () => {
   sfx.ui(); overlay('settings-overlay', false);
   if (!G.def) return;
+  S.game = null; save();
   if (G.daily) startLevel(dailyDef(todayKey()), true); else playLevel(G.levelNum);
 });
 $('btn-reset').addEventListener('click', () => {
@@ -610,6 +644,11 @@ $('btn-reset').addEventListener('click', () => {
 /* ---------- boot ---------- */
 document.addEventListener('pointerdown', function unlock() { ac(); document.removeEventListener('pointerdown', unlock); }, { once: true });
 renderHome();
+setTimeout(() => {
+  const sp = $('splash');
+  sp.classList.add('hide');
+  setTimeout(() => sp.remove(), 600);
+}, 1100);
 const qs = new URLSearchParams(location.search);
 if (qs.get('level')) playLevel(Math.max(1, +qs.get('level') || 1));
 if ('serviceWorker' in navigator && location.hostname !== '127.0.0.1') navigator.serviceWorker.register('./sw.js').catch(() => {});

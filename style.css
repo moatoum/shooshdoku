@@ -38,6 +38,24 @@ body::before {
   background-size: 72px 72px;
 }
 
+/* ============ Splash ============ */
+#splash {
+  position: fixed; inset: 0; z-index: 200;
+  background: linear-gradient(170deg, #AE9AE6, #9A83DC);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity .5s ease;
+}
+#splash.hide { opacity: 0; pointer-events: none; }
+#splash img {
+  width: min(62vw, 260px); border-radius: 32px;
+  box-shadow: 0 24px 60px rgba(50, 30, 90, .35);
+}
+.splash-title {
+  margin-top: 26px; font-size: clamp(26px, 8vw, 34px); font-weight: 900;
+  color: #FFF6E5; letter-spacing: .08em;
+}
+.splash-sub { margin-top: 8px; font-size: 15px; font-weight: 700; color: #E9E2FB; }
+
 /* ============ Screens ============ */
 .screen {
   position: fixed; inset: 0;
@@ -77,6 +95,15 @@ body::before {
 .streak-chip { cursor: pointer; transition: transform .12s; }
 .streak-chip:active { transform: scale(.92); }
 .paw-ico { width: 20px; height: 20px; fill: var(--orange); }
+.chip-pair { display: flex; gap: 8px; min-width: 0; }
+.chip-pair .chip { padding: 9px 14px; font-size: 16px; }
+
+.avatar-img {
+  width: 100%; height: 100%; object-fit: cover;
+  border-radius: inherit; display: block;
+}
+.avatar-btn .avatar-img, .avatar-preview .avatar-img { border-radius: 12px; }
+.tile .avatar-img { border-radius: 13px; }
 
 .avatar-btn {
   width: 54px; height: 54px; border-radius: 16px; border: 3px solid #B39DE6;

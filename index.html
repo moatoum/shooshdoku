@@ -13,9 +13,16 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./style.css?v=6">
+<link rel="stylesheet" href="./style.css?v=7">
 </head>
 <body>
+
+<!-- ==================== SPLASH ==================== -->
+<div id="splash">
+  <img src="./icons/shoosh-splash.png" alt="Shoosh">
+  <div class="splash-title">SHOOSHDOKU</div>
+  <div class="splash-sub">made with 💛 for Shoosh</div>
+</div>
 
 <!-- ==================== SVG LIBRARY ==================== -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -91,7 +98,10 @@
 <div class="screen active" id="screen-home">
   <div class="topbar">
     <button class="avatar-btn f0" id="btn-profile" aria-label="Profile"><span id="home-avatar">😽</span></button>
-    <button class="chip streak-chip" id="btn-streak"><svg class="paw-ico"><use href="#paw"/></svg><b id="home-streak">0</b></button>
+    <div class="chip-pair">
+      <button class="chip streak-chip" id="btn-streak"><svg class="paw-ico"><use href="#paw"/></svg><b id="home-streak">0</b></button>
+      <div class="chip score-chip">⭐<b id="home-score">0</b></div>
+    </div>
     <button class="round-btn" id="btn-settings" aria-label="Settings">⚙︎</button>
   </div>
 
@@ -199,7 +209,7 @@
   <div class="overlay" id="lose-overlay">
     <div class="sheet">
       <svg class="sheet-cat wiggle"><use href="#cat-sad"/></svg>
-      <h2 class="sheet-title">Out of Fishes</h2>
+      <h2 class="sheet-title">GHOOOST?</h2>
       <div class="sheet-note">Cats remaining: <b id="lose-remaining">1</b></div>
       <button class="big-btn blue" id="btn-refill">Get 3 Fishes&nbsp;&nbsp;💛 free</button>
       <button class="ghost-btn" id="btn-restart">Restart</button>
@@ -257,7 +267,7 @@
   </div>
 </div>
 
-<script src="./levels.js?v=5"></script>
-<script src="./app.js?v=5"></script>
+<script src="./levels.js?v=7"></script>
+<script src="./app.js?v=7"></script>
 </body>
 </html>
